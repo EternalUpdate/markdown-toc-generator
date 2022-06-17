@@ -11,24 +11,14 @@ function processText(event) {
 
   // process input
   let inputArray = inputValue.split("\n");
-  let outputArray = [];
+  let outputArray = ["# Table of Contents\n"];
 
   // add headers
   for (let i = 0; i < inputArray.length; i++) {
     let line = inputArray[i];
-    let headerDepth = getHeaderDepth(line);
 
-    if (headerDepth > 0) {
-      line = removeHeaderPounds(line);
-      line = "[" + line;
-      // add tabs per header for readability
-      for (let j = 0; j < headerDepth; j++) {
-        if (headerDepth > 1) {
-          line = "\t" + line;
-        }
-      }
-      // new line for readability
-      line = line + "]\n";
+    if (isHeader(line)) {
+      line = formatLine(line);
       outputArray.push(line);
     }
   }
@@ -39,6 +29,7 @@ function processText(event) {
     outputValue = outputValue + outputArray[i];
   }
 
+  // show on page
   document.getElementById("output").innerHTML = outputValue;
 }
 
@@ -73,6 +64,10 @@ function getHeaderDepth(string, max_depth = 6, headerDepth = 0) {
   }
 }
 
+function isHeader(string) {
+  return getHeaderDepth(string) > 0;
+}
+
 function removeHeaderPounds(string) {
   const headerDepth = getHeaderDepth(string);
   let headerPounds = " ";
@@ -80,4 +75,43 @@ function removeHeaderPounds(string) {
     headerPounds = "#" + headerPounds;
   }
   return string.replace(headerPounds, "");
+}
+
+function addTabs(string, headerDepth) {
+  for (let j = 1; j < headerDepth; j++) {
+    string = "\t" + string;
+  }
+
+  return string;
+}
+
+function formatLine(line) {
+  let headerDepth = getHeaderDepth(line);
+
+  // stop if it's not a header
+  if (headerDepth == 0) {
+    return line;
+  }
+
+  // keep only the text
+  line = removeHeaderPounds(line);
+
+  // figure out which format is needed
+  let format = document.querySelector(
+    "input[name='type-select']:checked"
+  ).value;
+
+  // format
+  switch (format) {
+    case "GitHub":
+      line = "[" + line + "]";
+      break;
+    case "BearApp":
+      line = "[[/" + line + "]]";
+      break;
+  }
+
+  line = addTabs(line, headerDepth) + "\n";
+
+  return line;
 }
